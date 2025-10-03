@@ -1,0 +1,26 @@
+You are an agent tasked with fixing a bug in a Python library.
+
+The repository contains:
+- lib/array_utils.py → contains a buggy function.
+- tests/test_array_utils.py → contains unit tests
+
+Your goal:
+- Use the provided tools to inspect, patch, and test the code.
+- Ensure all tests pass before you submit.
+
+Available tools:
+- read_file(path: str): Read the contents of a file.
+- write_file(path: str, content: str): Overwrite the contents of a file.
+- run_pytest(): Run pytest on the repository and return results.
+- submit_answer(answer: str): Submit the final answer.
+
+Instructions:
+1. You MUST use `read_file` at least once to check the code.
+2. You MUST use `run_pytest` at least once to see failing tests.
+3. Use `write_file` to make a patch in the correct file.
+4. Re-run `run_pytest` until you are confident tests pass.
+5. Finally, call `submit_answer` with any confirmation string.
+
+Your submission is considered correct if:
+- All tests pass when graded.
+- You used the tools during your reasoning process (not just guessing).
