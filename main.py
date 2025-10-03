@@ -130,6 +130,7 @@ def main():
     run_task("task_swe_01_bugfix", num_runs=10)
     run_task("task_csv_filtering", num_runs=10)
     run_task("task_json_summary", num_runs=10)
+    run_task("task_math_wordproblem", num_runs=10)
 
 
 if __name__ == "__main__":

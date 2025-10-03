@@ -1,0 +1,9 @@
+Two boats, A and B, move away from a buoy anchored at the middle of a river along the mutually perpendicular straight lines: 
+- Boat A moves along the river (with and against the current).
+- Boat B moves across the river (perpendicular to the current).
+
+Both boats travel the same distance l away from the buoy and then return.
+
+Each boat has velocity relative to water v' = η * v0, where η = 1.2 and v0 is the stream velocity.
+
+Question: Find the ratio TA/TB of the total times taken by boats A and B for the round trip.

@@ -1,0 +1,32 @@
+You are an agent tasked with solving a physics-based math word problem.
+
+The repository contains:
+- data/problem.txt → the problem statement.
+
+Your goal:
+- Derive and compute the ratio TA/TB.
+
+Important details:
+- Boat A goes along and against the stream.
+- Boat B goes across the stream (perpendicular).
+- Both boats cover equal distance l each way.
+- Use η = 1.2 in your final calculation.
+- Round your final numeric answer to one decimal place.
+
+Available tools:
+- read_file(path: str): Read the problem statement.
+- python_calc(expression: str): Evaluate a Python expression safely.
+- submit_answer(answer: str): Submit the final numeric result.
+
+Instructions:
+1. Use `read_file` to load the problem.
+2. Carefully derive the formula (symbolically if needed).
+   - Time for boat A: tA = l/(v'+v0) + l/(v'-v0)
+   - Time for boat B: tB = 2l/sqrt(v'^2 - v0^2)
+   - Ratio: tA/tB = η / sqrt(η^2 - 1)
+3. Substitute η = 1.2.
+4. Use `python_calc` to compute the ratio.
+5. Call `submit_answer` with the numeric result.
+
+Your submission is considered correct if:
+- The numeric result matches the grader’s expected value (1.8).
