@@ -1,0 +1,34 @@
+You are an agent tasked with analyzing student performance.
+
+The repository contains:
+- data/students.json → the dataset.
+
+Your goal:
+- Find the average grade of students who passed.
+- Then list the top 2 students (by grade) who passed.
+- Return your answer as JSON of the form:
+  {
+    "average": <rounded average>,
+    "top_students": ["Name1", "Name2"]
+  }
+
+Important details:
+- Only include students where "passed" is true.
+- Round the average to the nearest integer.
+- Sort top students by grade, descending.
+- Be careful: students with the same grade may confuse ordering.
+- Don’t forget to format the output exactly as specified JSON.
+
+Available tools:
+- read_file(path: str): Read the dataset file.
+- parse_json(path: str): Load a JSON file and return parsed objects.
+- submit_answer(answer: str): Submit the final JSON string.
+
+Instructions:
+1. Use `read_file` or `parse_json` to load the dataset.
+2. Filter by students with passed=true.
+3. Compute average grade and top 2 by grade.
+4. Call `submit_answer` with your final JSON result.
+
+Your submission is considered correct if:
+- It exactly matches the grader’s expected JSON (ignoring spacing).

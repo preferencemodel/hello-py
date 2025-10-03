@@ -1,0 +1,8 @@
+[
+  {"id": 1, "name": "Devesh", "grade": 85, "passed": true},
+  {"id": 2, "name": "Krishna", "grade": 67, "passed": true},
+  {"id": 3, "name": "Anil", "grade": 45, "passed": false},
+  {"id": 4, "name": "Pankaj", "grade": 92, "passed": true},
+  {"id": 5, "name": "Jenny", "grade": 74, "passed": true},
+  {"id": 6, "name": "Shree", "grade": 30, "passed": false}
+]
