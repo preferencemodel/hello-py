@@ -374,7 +374,7 @@ def run_task(task_name: str, num_runs=3):
 # =====================
 def main():
     run_task("task_swe_01_bugfix", num_runs=10)
-    # later: run_task("task2_xyz"), run_task("task3_xyz"), ...
+    run_task("task_csv_filtering", num_runs=10)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,28 @@
+You are an agent tasked with analyzing employee data from a CSV file.
+
+The repository contains:
+- data/employees.csv → the dataset.
+
+Your goal:
+- Find the average salary of employees in the Engineering department
+  who have more than 3 years of experience.
+- Round the result to the nearest integer.
+
+Important details:
+- Make sure you only include Engineering employees.
+- Be careful about whether "more than 3" means >=4 or >3 (clarify!).
+- Round at the end, not before.
+- Some columns may look relevant but are not.
+
+Available tools:
+- read_file(path: str): Read the contents of a file.
+- filter_csv(path: str, column: str, condition: str): Filter CSV rows.
+- submit_answer(answer: str): Submit the final answer.
+
+Instructions:
+1. Use `read_file` to check the dataset structure.
+2. Use `filter_csv` to filter employees by department and experience.
+3. Compute the average salary.
+4. Call `submit_answer` with the final result.
+
+Your submission is considered correct if it matches the expected average salary.
