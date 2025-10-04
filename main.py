@@ -128,8 +128,8 @@ TASK_MAP = {
     "1": "task_csv_filtering",
     "2": "task_json_summary",
     "3": "task_math_wordproblem",
-    "4": "task_boats_ratio",
-    "5": "task_marbles_probability",
+    "4": "task_logic_puzzle",
+    "5": "task_swe_01_bugfix",
 }
 
 # =====================
@@ -140,8 +140,8 @@ def main():
     print("1 - CSV Filtering")
     print("2 - JSON Summary")
     print("3 - Math Word Problem")
-    print("4 - Boats Ratio Puzzle")
-    print("5 - Marbles Probability Puzzle")
+    print("4 - Logic Puzzle")
+    print("5 - SWE Bugfix")
     user_choice = input("Enter task number (1–5): ").strip()
 
     # fallback to task 1 if invalid input
