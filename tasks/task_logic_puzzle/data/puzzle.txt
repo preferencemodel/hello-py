@@ -1,0 +1,7 @@
+There are two boxes, B1 and B2. One of the boxes contains 50 red marbles, and the other contains 50 blue marbles. 
+
+You may redistribute the marbles between the two boxes in any way you like, without changing the total number of red and blue marbles (50 red, 50 blue in total).
+
+A box is then selected at random, and from that box one marble is chosen at random.
+
+Question: How should you redistribute the marbles to maximize the probability of selecting a red marble, and what is that maximum probability (rounded to 3 decimal places)?

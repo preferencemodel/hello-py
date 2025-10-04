@@ -1,0 +1,32 @@
+You are an agent tasked with solving a probability puzzle.
+
+The repository contains:
+- data/puzzle.txt → the puzzle description.
+
+Your goal:
+- Find the redistribution strategy that maximizes the chance of drawing a red marble.
+- Submit only the maximum probability (rounded to 3 decimal places).
+
+Important details:
+- Both boxes are equally likely to be chosen (probability 1/2).
+- Each marble in a chosen box is equally likely.
+- There are 50 red and 50 blue marbles total.
+- Be careful: the naive setup (50 in one box, 50 in another) gives only 0.5.
+- The optimal strategy redistributes marbles unevenly.
+
+Available tools:
+- read_file(path: str): Read the puzzle text.
+- python_calc(expression: str): Safely evaluate Python expressions.
+- submit_answer(answer: str): Submit the final probability value.
+
+Instructions:
+1. Use `read_file` to load the puzzle.
+2. Derive the probability expression.
+   - General formula: P(R) = 0.5 * (red1 / total1) + 0.5 * (red2 / total2).
+3. Experiment with redistributions using `python_calc`.
+4. Submit the maximum probability found (rounded to 3 decimals).
+
+
+IMPORTANT: When you finish, you MUST call `submit_answer` with only the numeric probability (rounded to 3 decimals), e.g., "0.747".
+Do not output explanations, fractions, or text. Only the number.
+
