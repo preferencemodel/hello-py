@@ -123,15 +123,32 @@ def run_task(task_name: str, num_runs=3):
     print(f"\nTask {task_name} Results: {successes}/{num_runs} ({pass_rate:.1f}%)")
 
 
+# Map task numbers to folder names
+TASK_MAP = {
+    "1": "task_csv_filtering",
+    "2": "task_json_summary",
+    "3": "task_math_wordproblem",
+    "4": "task_boats_ratio",
+    "5": "task_marbles_probability",
+}
+
 # =====================
 # Entry Point
 # =====================
 def main():
-    run_task("task_swe_01_bugfix", num_runs=10)
-    run_task("task_csv_filtering", num_runs=10)
-    run_task("task_json_summary", num_runs=10)
-    run_task("task_math_wordproblem", num_runs=10)
-    run_task("task_logic_puzzle", num_runs=10)
+    print("Select a task to run:")
+    print("1 - CSV Filtering")
+    print("2 - JSON Summary")
+    print("3 - Math Word Problem")
+    print("4 - Boats Ratio Puzzle")
+    print("5 - Marbles Probability Puzzle")
+    user_choice = input("Enter task number (1–5): ").strip()
+
+    # fallback to task 1 if invalid input
+    task_name = TASK_MAP.get(user_choice, TASK_MAP["1"])
+
+    print(f"\n▶ Running {task_name} ...\n")
+    run_task(task_name, num_runs=10)
 
 
 if __name__ == "__main__":
