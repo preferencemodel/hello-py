@@ -8,7 +8,7 @@ from anthropic.types import MessageParam, ToolUnionParam
 
 from problem import Problem
 
-MAX_TOKENS = 1000
+MAX_TOKENS = 5000
 
 
 async def run_agent_loop(
@@ -150,18 +150,33 @@ async def run_single_test(
         prompt=problem.prompt,
         tools=problem.tools,
         tool_handlers=problem.tool_handlers,
-        max_steps=5,
+        max_steps=15,
         verbose=verbose,
     )
 
     success = problem.grade(result)
 
     if success:
-        print(f"✓ Run {run_id}: SUCCESS - Got {result}")
+        if isinstance(result, int | float) and result > 0.5:
+            # Likely a speedup ratio
+            print(
+                f"✓ Run {run_id}: SUCCESS - Achieved {result:.2f}x speedup (target: {problem.expected_answer})"
+            )
+        else:
+            print(f"✓ Run {run_id}: SUCCESS - Got {result}")
     else:
-        print(
-            f"✗ Run {run_id}: FAILURE - Got {result}, expected {problem.expected_answer}"
-        )
+        if result is None:
+            print(
+                f"✗ Run {run_id}: FAILURE - No answer submitted (expected: {problem.expected_answer})"
+            )
+        elif isinstance(result, int | float):
+            print(
+                f"✗ Run {run_id}: FAILURE - Got {result:.2f}x, expected {problem.expected_answer}"
+            )
+        else:
+            print(
+                f"✗ Run {run_id}: FAILURE - Got {result}, expected {problem.expected_answer}"
+            )
 
     return run_id, success, result
 
@@ -170,6 +185,7 @@ async def main(
     problem: Problem,
     num_runs: int = 1,
     concurrent: bool = True,
+    verbose: bool = False,
 ):
     """
     Runs the agent test suite.
@@ -178,9 +194,12 @@ async def main(
         problem: Problem instance containing the task definition
         num_runs: Number of test iterations to run (default 10)
         concurrent: Whether to run tests concurrently or sequentially (default True)
+        verbose: Whether to print detailed agent reasoning and tool usage (default False)
     """
     execution_mode = "concurrently" if concurrent else "sequentially"
     print(f"Running {num_runs} test iterations {execution_mode}...")
+    if verbose:
+        print("Verbose mode: ON (showing agent reasoning and tool usage)")
     print("=" * 60)
 
     # Create all test coroutines
@@ -189,7 +208,7 @@ async def main(
             run_id=i + 1,
             num_runs=num_runs,
             problem=problem,
-            verbose=False,
+            verbose=verbose,
         )
         for i in range(num_runs)
     ]

@@ -38,72 +38,14 @@ When running concurrently, results print as they complete (not in run order) for
 
 # Connor Soohoo's solution
 
-## Task Brainstorming
+## Task: **Optimize Slow Training Loop with Profiling**
 
-Here are 3 potential tasks that ML researchers commonly encounter:
-
-### Option 1: **Reproduce Experimental Results from Paper with Verification**
-**Task Description**: Given a paper's methodology section and baseline results, implement the experiment and verify the results match within statistical tolerance.
-
-**Why it's interesting**:
-- Core research skill: reproducing published results
-- Requires reading comprehension + implementation + numerical validation
-- Multiple valid implementation approaches
-- Tests attention to detail in methodology
-
-**Expected failure modes**:
-- Misunderstanding experimental setup
-- Wrong hyperparameters or initialization
-- Not using the same evaluation metric
-- Missing preprocessing steps
-- Statistical comparison issues (not accounting for randomness)
-
-**Grading approach**: Check if reproduced result is within confidence interval of reported result
-
-**Difficulty tuning**: Adjust complexity of method, clarity of methodology description, strictness of tolerance
-
----
-
-### Option 2: **Refactor Messy Research Notebook into Production-Ready Module**
-**Task Description**: Convert a Jupyter notebook with exploratory code into a clean, documented, tested Python package with proper structure.
-
-**Why it's interesting**:
-- Critical transition from research to production
-- Tests software engineering skills (structure, testing, documentation)
-- Multiple design decisions to make
-- Common real-world task
-
-**Expected failure modes**:
-- Missing tests or low test coverage
-- Poor code organization (everything in one file)
-- Missing or incomplete docstrings
-- No type hints
-- Linting issues (unused imports, formatting)
-- Package not importable
-
-**Grading approach**:
-```python
-checks = {
-    "has_pyproject_toml": check_file_exists("pyproject.toml"),
-    "has_tests": check_tests_exist(),
-    "passes_linting": run_ruff_check(),
-    "has_docstrings": check_docstring_coverage() > 0.8,
-    "has_type_hints": run_mypy_check(),
-    "imports_work": test_package_import()
-}
-```
-
-**Difficulty tuning**: Adjust messiness of notebook, number of required checks, strictness of thresholds
-
----
-
-### Option 3: **Optimize Slow Training Loop with Profiling**
 **Task Description**: Given a slow training loop implementation, use profiling to identify bottlenecks and optimize performance while maintaining equivalent model performance.
 
 **Why it's interesting**:
 - Critical skill for efficient research
 - Requires understanding of profiling tools
-- Multiple optimization strategies (vectorization, caching, algorithmic improvements)
+- Multiple optimization strategies (vectorization, caching, algorithmic improvements).
 - Tests ability to maintain correctness while improving speed
 
 **Expected failure modes**:
@@ -122,4 +64,40 @@ checks = {
 
 ---
 
-### Selected Task: [TBD]
+## ML Training Optimization Problem - Performance Bottlenecks
+
+The `slow_ml_training_1.py` file in `problem_data/` contains several intentional performance bottlenecks:
+
+### Data Generation Bottleneck
+- **Function**: `generate_synthetic_images()`
+- **Issue**: Returns Python lists instead of numpy arrays
+- **Impact**: Forces conversion overhead in downstream functions
+
+### Feature Extraction Bottlenecks
+- **Function**: `extract_features_slow()`
+- **Issues**:
+  1. Uses nested Python loops instead of vectorized NumPy operations
+  2. Recalculates the mean value multiple times (for std dev calculation)
+  3. Manually iterates through pixels for basic statistics (mean, std, max, min)
+  4. Calculates quadrant means using nested loops instead of array slicing
+- **Impact**: This is typically the slowest part of the pipeline
+
+### Feature Normalization Bottleneck
+- **Function**: `normalize_features_slow()`
+- **Issue**: Uses triple-nested loops to normalize features instead of vectorized operations
+- **Impact**: Could be replaced with simple NumPy broadcasting
+
+### Training Configuration
+- **Function**: `train_model()`
+- **Issue**: RandomForest configured with `n_jobs=1` (single-threaded)
+- **Impact**: Could benefit from parallel processing
+
+### Optimization Strategies
+Agents should:
+1. Use profiling to identify which functions take the most time
+2. Replace Python loops with vectorized NumPy operations
+3. Eliminate redundant calculations
+4. Consider parallelization where appropriate
+5. Verify correctness is maintained after optimization
+
+---
