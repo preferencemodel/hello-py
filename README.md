@@ -66,38 +66,50 @@ When running concurrently, results print as they complete (not in run order) for
 
 ## ML Training Optimization Problem - Performance Bottlenecks
 
-The `slow_ml_training_1.py` file in `problem_data/` contains several intentional performance bottlenecks:
+### Available Problem Variants
 
-### Data Generation Bottleneck
-- **Function**: `generate_synthetic_images()`
-- **Issue**: Returns Python lists instead of numpy arrays
-- **Impact**: Forces conversion overhead in downstream functions
+The codebase includes two ML optimization problems with different frameworks:
 
-### Feature Extraction Bottlenecks
-- **Function**: `extract_features_slow()`
-- **Issues**:
-  1. Uses nested Python loops instead of vectorized NumPy operations
-  2. Recalculates the mean value multiple times (for std dev calculation)
-  3. Manually iterates through pixels for basic statistics (mean, std, max, min)
-  4. Calculates quadrant means using nested loops instead of array slicing
-- **Impact**: This is typically the slowest part of the pipeline
+| Feature | Problem 1 (NumPy) | Problem 2 (PyTorch) |
+|---------|-------------------|---------------------|
+| Framework | sklearn | PyTorch |
+| Model | RandomForest | Neural Network (SimpleNN) |
+| Baseline File | `slow_ml_training_numpy.py` | `slow_ml_training_pytorch.py` |
+| Samples | 1000 | 2000 |
+| Features | 8 | 8 |
+| Main bottleneck | Feature extraction loops | Single-sample training loop |
+| Required imports | `numpy`, `sklearn` | `torch`, `nn` |
+| Key components | `RandomForestClassifier`, `train_test_split` | `SimpleNN`, `Adam`, `CrossEntropyLoss` |
+| Accuracy tolerance | 0.01 | 0.02 |
+| Target speedup | 2.0x | 2.0x |
 
-### Feature Normalization Bottleneck
-- **Function**: `normalize_features_slow()`
-- **Issue**: Uses triple-nested loops to normalize features instead of vectorized operations
-- **Impact**: Could be replaced with simple NumPy broadcasting
+**To switch between problems**, edit `main.py`:
+```python
+# Use NumPy/sklearn version:
+problem = MLTrainingOptimizationNumPy()
 
-### Training Configuration
-- **Function**: `train_model()`
-- **Issue**: RandomForest configured with `n_jobs=1` (single-threaded)
-- **Impact**: Could benefit from parallel processing
+# Use PyTorch version (default):
+problem = MLTrainingOptimizationPyTorch()
+```
 
-### Optimization Strategies
-Agents should:
-1. Use profiling to identify which functions take the most time
-2. Replace Python loops with vectorized NumPy operations
-3. Eliminate redundant calculations
-4. Consider parallelization where appropriate
-5. Verify correctness is maintained after optimization
+### Safety Checks Implemented
 
----
+The grader includes comprehensive safety checks to prevent cheating:
+
+1. **Code Content Validation**
+   - Verifies required imports are present (framework-specific)
+   - Checks for required ML components (models, optimizers, etc.)
+   - Ensures file is not suspiciously short (min 500-700 chars)
+
+2. **Output Pattern Validation**
+   - Validates train/test split sizes match expected values
+   - Checks feature shape matches baseline
+   - Ensures actual computation is happening (not just print statements)
+
+3. **Deterministic Behavior Check**
+   - Runs optimized code twice with same random seed
+   - Verifies results are identical (proves proper seeding, not random outputs)
+
+4. **Correctness Validation**
+   - Compares accuracy between baseline and optimized versions
+   - Requires accuracy to match within tolerance

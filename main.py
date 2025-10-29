@@ -1,14 +1,18 @@
 import asyncio
 
 from problem_runner import main
+from problems import (
+    MLTrainingOptimizationPyTorch,
+)
 
+# Uncomment to use MathCalculationProblem:
 # from problems import MathCalculationProblem
-from problems import MLTrainingOptimizationProblem
 
 if __name__ == "__main__":
     # Create the problem instance
     # problem = MathCalculationProblem()
-    problem = MLTrainingOptimizationProblem()
+    # problem = MLTrainingOptimizationNumPy()
+    problem = MLTrainingOptimizationPyTorch()
 
     # Configuration
     NUM_RUNS = 1

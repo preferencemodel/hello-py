@@ -8,6 +8,7 @@ dependencies = [
     "anthropic>=0.67.0",
     "numpy>=1.26.0",
     "scikit-learn>=1.4.0",
+    "torch>=2.0.0",
 ]
 
 [dependency-groups]
