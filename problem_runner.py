@@ -154,7 +154,9 @@ async def run_single_test(
         verbose=verbose,
     )
 
-    success = problem.grade(result)
+    # Wrap result in artifacts dictionary for grading
+    artifacts = {"result": result}
+    success = problem.grade(artifacts)
 
     if success:
         if isinstance(result, int | float) and result > 0.5:

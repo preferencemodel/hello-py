@@ -21,13 +21,15 @@ class Problem(ABC):
         self.expected_answer = expected_answer
 
     @abstractmethod
-    def grade(self, result: Any) -> bool:
+    def grade(self, artifacts: dict[str, Any]) -> bool:
         """
-        Grade the result against the expected answer.
+        Grade the artifacts against the expected answer.
         Subclasses must implement this method.
 
         Args:
-            result: The agent's submitted answer
+            artifacts: Dictionary containing artifacts from the agent's work
+                      (e.g., {"result": value} for simple problems,
+                       {"optimized_file": path} for optimization problems)
 
         Returns:
             bool: True if the result is correct, False otherwise

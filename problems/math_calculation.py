@@ -15,6 +15,7 @@ class MathCalculationProblem(Problem):
             expected_answer=8769,
         )
 
-    def grade(self, result: Any) -> bool:
+    def grade(self, artifacts: dict[str, Any]) -> bool:
         """Check if result exactly equals expected answer."""
+        result = artifacts.get("result")
         return result == self.expected_answer

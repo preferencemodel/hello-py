@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # Configuration
     NUM_RUNS = 1
     CONCURRENT = False
-    VERBOSE = True  # Set to True to see agent's reasoning and tool usage
+    VERBOSE = False  # Set to True to see agent's reasoning and tool usage
 
     # Run the test suite
     asyncio.run(
