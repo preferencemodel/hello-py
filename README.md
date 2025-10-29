@@ -25,7 +25,7 @@ Setup instructions:
 
 ## Execution Modes
 
-The test suite supports both concurrent and sequential execution. 
+The test suite supports both concurrent and sequential execution.
 
 To change modes, edit the `concurrent` parameter at the bottom of `main.py`:
 
