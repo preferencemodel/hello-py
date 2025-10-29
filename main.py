@@ -2,6 +2,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from contextlib import redirect_stdout
+from dataclasses import dataclass
 from io import StringIO
 from typing import Any, TypedDict
 
@@ -19,6 +20,17 @@ class PythonExpressionToolResult(TypedDict):
 class SubmitAnswerToolResult(TypedDict):
     answer: Any
     submitted: bool
+
+
+@dataclass
+class Problem:
+    """Encapsulates a task/problem for the agent to solve."""
+
+    prompt: str
+    tools: list[ToolUnionParam]
+    tool_handlers: dict[str, Callable[..., Any]]
+    expected_answer: Any
+    grader: Callable[[Any, Any], bool] = lambda result, expected: result == expected
 
 
 def python_expression_tool(expression: str) -> PythonExpressionToolResult:
@@ -172,70 +184,43 @@ async def run_agent_loop(
 async def run_single_test(
     run_id: int,
     num_runs: int,
-    prompt: str,
-    tools: list[ToolUnionParam],
-    tool_handlers: dict[str, Callable[..., Any]],
-    expected_answer: Any,
+    problem: Problem,
     verbose: bool = False,
 ) -> tuple[int, bool, Any]:
     if verbose:
         print(f"\n\n{'=' * 20} RUN {run_id}/{num_runs} {'=' * 20}")
 
     result = await run_agent_loop(
-        prompt=prompt,
-        tools=tools,
-        tool_handlers=tool_handlers,
+        prompt=problem.prompt,
+        tools=problem.tools,
+        tool_handlers=problem.tool_handlers,
         max_steps=5,
         verbose=verbose,
     )
 
-    success = result == expected_answer
+    success = problem.grader(result, problem.expected_answer)
 
     if success:
         print(f"✓ Run {run_id}: SUCCESS - Got {result}")
     else:
-        print(f"✗ Run {run_id}: FAILURE - Got {result}, expected {expected_answer}")
+        print(f"✗ Run {run_id}: FAILURE - Got {result}, expected {problem.expected_answer}")
 
     return run_id, success, result
 
 
-async def main(concurrent: bool = True):
-    tools: list[ToolUnionParam] = [
-        {
-            "name": "python_expression",
-            "description": "Evaluates a Python expression",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "expression": {
-                        "type": "string",
-                        "description": "Will be passed to exec(). Use print() to output something. Returns stdout. ",
-                    }
-                },
-                "required": ["expression"],
-            },
-        },
-        {
-            "name": "submit_answer",
-            "description": "Submit the final answer",
-            "input_schema": {
-                "type": "object",
-                "properties": {"answer": {"description": "The final answer to submit"}},
-                "required": ["answer"],
-            },
-        },
-    ]
+async def main(
+    problem: Problem,
+    num_runs: int = 10,
+    concurrent: bool = True,
+):
+    """
+    Runs the agent test suite.
 
-    tool_handlers = {
-        "python_expression": python_expression_tool,
-        "submit_answer": submit_answer_tool,
-    }
-
-    # Run the test 10 times and track success rate
-    num_runs = 10
-    expected_answer = 8769
-    prompt = "Calculate (2^10 + 3^5) * 7 - 100. Use the python_expression tool and then submit the answer."
-
+    Args:
+        problem: Problem instance containing the task definition
+        num_runs: Number of test iterations to run (default 10)
+        concurrent: Whether to run tests concurrently or sequentially (default True)
+    """
     execution_mode = "concurrently" if concurrent else "sequentially"
     print(f"Running {num_runs} test iterations {execution_mode}...")
     print("=" * 60)
@@ -245,10 +230,7 @@ async def main(concurrent: bool = True):
         run_single_test(
             run_id=i + 1,
             num_runs=num_runs,
-            prompt=prompt,
-            tools=tools,
-            tool_handlers=tool_handlers,
-            expected_answer=expected_answer,
+            problem=problem,
             verbose=False,
         )
         for i in range(num_runs)
@@ -282,5 +264,55 @@ async def main(concurrent: bool = True):
 
 
 if __name__ == "__main__":
-    # Set to True for concurrent execution, False for sequential execution
-    asyncio.run(main(concurrent=True))
+    # Define tools
+    tools: list[ToolUnionParam] = [
+        {
+            "name": "python_expression",
+            "description": "Evaluates a Python expression",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "Will be passed to exec(). Use print() to output something. Returns stdout. ",
+                    }
+                },
+                "required": ["expression"],
+            },
+        },
+        {
+            "name": "submit_answer",
+            "description": "Submit the final answer",
+            "input_schema": {
+                "type": "object",
+                "properties": {"answer": {"description": "The final answer to submit"}},
+                "required": ["answer"],
+            },
+        },
+    ]
+
+    # Define tool handlers
+    tool_handlers = {
+        "python_expression": python_expression_tool,
+        "submit_answer": submit_answer_tool,
+    }
+
+    # Define custom grader (optional)
+    # Default grader is simple equality: lambda result, expected: result == expected
+    # Example custom graders:
+    # - Numeric tolerance: lambda r, e: abs(r - e) < 0.01
+    # - String contains: lambda r, e: e in str(r)
+    # - Type checking: lambda r, e: isinstance(r, type(e)) and r == e
+    # grader = lambda r, e: abs(r - e) < 0.01  # Custom grader example
+
+    # Create the Problem instance
+    problem = Problem(
+        prompt="Calculate (2^10 + 3^5) * 7 - 100. Use the python_expression tool and then submit the answer.",
+        tools=tools,
+        tool_handlers=tool_handlers,
+        expected_answer=8769,
+        # grader=grader,  # Optional: defaults to equality check
+    )
+
+    # Run the test suite
+    asyncio.run(main(problem=problem, num_runs=10, concurrent=False))
