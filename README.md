@@ -113,3 +113,29 @@ The grader includes comprehensive safety checks to prevent cheating:
 4. **Correctness Validation**
    - Compares accuracy between baseline and optimized versions
    - Requires accuracy to match within tolerance
+
+
+  Based on the complex training pipeline analysis:
+  - Fix O(n²) normalization: ~3x speedup (30-35% of runtime)
+  - Vectorize custom activation: ~2x additional (25-30% of runtime)
+  - Optimize gradient extraction: ~1.2x additional (8-10% of runtime)
+  - Increase batch size: ~1.5x additional (8-10% overhead)
+  - Total achievable: ~9-10x speedup
+
+Failure modes:
+1. tries to completely rewrite ComplexFeatureExtractor or ComplexNN into something non-sensical and tries to cheat the system, instead of using proper profiling tools or optimizations
+
+
+2. Doesn't adhere to the prompt requirements (don't rewrite the function names because of validation, or instead of outputting artifacts under output/run_X, it just outputs to the root directory)
+
+Gets between 32 and 34x optimized.
+3.
+# Line 81-101: Replace O(n²) normalization
+  def custom_normalize(self, features):
+      """Efficient z-score normalization - O(n)."""
+      mean = np.mean(features, axis=0, keepdims=True)
+      std = np.std(features, axis=0, keepdims=True) + 1e-8
+      return (features - mean) / std
+  Result: ~15-16s runtime (1.7-1.8x speedup) ✅
+
+4. Doesn't actually generate a optimized_ml_training.py file (model instability)

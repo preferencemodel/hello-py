@@ -1,12 +1,14 @@
 import asyncio
 import json
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from anthropic import AsyncAnthropic
 from anthropic.types import MessageParam, ToolUnionParam
 
 from problem import Problem
+from tools import current_run_context
 
 MAX_TOKENS = 5000
 
@@ -143,8 +145,16 @@ async def run_single_test(
     problem: Problem,
     verbose: bool = False,
 ) -> tuple[int, bool, Any]:
+    # Create output directory for this run
+    output_dir = Path("output") / f"run_{run_id}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Set context for this run
+    current_run_context.set({"output_dir": str(output_dir), "run_id": run_id})
+
     if verbose:
         print(f"\n\n{'=' * 20} RUN {run_id}/{num_runs} {'=' * 20}")
+        print(f"Output directory: {output_dir}")
 
     result = await run_agent_loop(
         prompt=problem.prompt,
@@ -176,8 +186,10 @@ async def run_single_test(
                 f"✗ Run {run_id}: FAILURE - Got {result:.2f}x, expected {problem.expected_answer}"
             )
         else:
+            # For non-numeric results (like filepaths), just show failure
+            # Detailed error message already printed by grade() method
             print(
-                f"✗ Run {run_id}: FAILURE - Got {result}, expected {problem.expected_answer}"
+                f"✗ Run {run_id}: FAILURE - See error details above (expected: {problem.expected_answer})"
             )
 
     return run_id, success, result

@@ -2,20 +2,28 @@ import asyncio
 
 from problem_runner import main
 from problems import (
-    MLTrainingOptimizationPyTorch,
+    ComplexMLTrainingWithPySpy,
 )
 
-# Uncomment to use MathCalculationProblem:
-# from problems import MathCalculationProblem
+# Uncomment to use other problems:
+# from problems import (
+#     MathCalculationProblem,
+#     MLTrainingOptimizationNumPy,
+#     MLTrainingOptimizationPyTorch,
+#     MLTrainingOptimizationComplex,
+# )
 
 if __name__ == "__main__":
     # Create the problem instance
     # problem = MathCalculationProblem()
     # problem = MLTrainingOptimizationNumPy()
-    problem = MLTrainingOptimizationPyTorch()
+    # problem = MLTrainingOptimizationPyTorch()
+
+    # 40% pass rate over 10 runs.
+    problem = ComplexMLTrainingWithPySpy(include_pyspy=True)
 
     # Configuration
-    NUM_RUNS = 1
+    NUM_RUNS = 1  # Takes about 20 minutes to run with this set to 10, set to 1 for just doing coding.
     CONCURRENT = False
     VERBOSE = False  # Set to True to see agent's reasoning and tool usage
 

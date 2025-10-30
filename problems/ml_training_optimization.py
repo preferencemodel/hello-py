@@ -40,6 +40,9 @@ class MLTrainingOptimizationProblem(Problem):
         expected_output_patterns: dict[str, Any],
         min_file_length: int = 500,
         accuracy_tolerance: float = 0.01,
+        target_speedup: float = TARGET_SPEEDUP,
+        tools: list[Any] | None = None,
+        tool_handlers: dict[str, Any] | None = None,
     ):
         """
         Initialize the ML Training Optimization Problem.
@@ -52,6 +55,9 @@ class MLTrainingOptimizationProblem(Problem):
                 Example: {"train_size": 800, "test_size": 200, "n_samples": 1000, "n_features": 8}
             min_file_length: Minimum acceptable file length in characters
             accuracy_tolerance: Maximum allowed difference in accuracy between baseline and optimized
+            target_speedup: Required speedup ratio (default: TARGET_SPEEDUP)
+            tools: Optional custom tool schemas (default: BasicToolset.get_tools())
+            tool_handlers: Optional custom tool handlers (default: BasicToolset.get_handlers())
         """
         # Store configuration for safety checks
         self.slow_training_file = slow_training_file
@@ -60,33 +66,54 @@ class MLTrainingOptimizationProblem(Problem):
         self.expected_output_patterns = expected_output_patterns
         self.min_file_length = min_file_length
         self.accuracy_tolerance = accuracy_tolerance
+        self.target_speedup = target_speedup
 
-        prompt = f"""You have an ML training pipeline that needs optimization for a {TARGET_SPEEDUP}x speedup.
+        # Use provided tools or default to BasicToolset
+        if tools is None:
+            tools = BasicToolset.get_tools()
+        if tool_handlers is None:
+            tool_handlers = BasicToolset.get_handlers()
+
+        prompt = f"""You have an ML training pipeline that needs optimization for a {self.target_speedup}x speedup.
 
 Your task is to:
 1. Read the training code from '{self.slow_training_file}' using read_file
 2. Analyze the code and identify performance bottlenecks
+   - Option A: Manual code analysis
+   - Option B: Use profile_with_pyspy('{self.slow_training_file}') to generate a trace file and analyze it at https://www.speedscope.app
 3. Create an optimized version of the code (use vectorization, better algorithms, etc.)
-4. Write the optimized code to a new file (e.g., 'optimized_ml_training.py')
+4. Write the optimized code to a new file in the output directory
 5. Submit the path to your optimized file using submit_answer(filepath)
 
-IMPORTANT:
-- You must achieve at least {TARGET_SPEEDUP}x speedup (ratio >= {TARGET_SPEEDUP})
+IMPORTANT REQUIREMENTS:
+- You must achieve at least {self.target_speedup}x speedup (ratio >= {self.target_speedup})
 - Ensure the optimized code produces the same results (same accuracy)
+- The optimized file MUST preserve the core components from the original file:
+  * Keep the same imports: {', '.join(self.required_imports)}
+  * Keep the same key components: {', '.join(self.required_components)}
+  * These are required for validation - do not remove them even if optimizing
 - The grader will run both versions and compare runtime and correctness
+- ALL output files (optimized code, profiling data, etc.) will be automatically saved to a run-specific output directory
 - Submit the filepath to your optimized code using submit_answer(filepath)
+
+PROFILING OPTION:
+- Use profile_with_pyspy(file_path) to profile any Python file and generate a trace
+- The trace will be automatically saved to the output directory for this run
+- The trace can be viewed at https://www.speedscope.app
+- This provides detailed timing information about function calls and execution to identify bottlenecks
 
 Example workflow:
 1. Read and analyze {self.slow_training_file}
-2. Create optimized_ml_training.py with improvements
-3. Submit "optimized_ml_training.py" using submit_answer("optimized_ml_training.py")
+2. Optionally: profile_with_pyspy('{self.slow_training_file}') to identify bottlenecks
+3. Create optimized_ml_training.py with improvements (save to output directory if possible)
+4. Submit "optimized_ml_training.py" using submit_answer("optimized_ml_training.py")
 """
 
         super().__init__(
             prompt=prompt,
-            tools=BasicToolset.get_tools(),
-            tool_handlers=BasicToolset.get_handlers(),
-            expected_answer=f"{TARGET_SPEEDUP}x or better",  # Human-readable expected speedup
+            tools=tools,
+            tool_handlers=tool_handlers,
+            expected_answer=f"{self.target_speedup}x or better",  # Human-readable expected speedup
         )
 
         # Run the baseline code and store results
@@ -299,20 +326,38 @@ Example workflow:
             result = self._run_training_file(optimized_file, return_output=True)
             assert len(result) == 3, "Expected 3 return values when return_output=True"
             optimized_time, optimized_accuracy, output = result
+
+            # Calculate speedup early so we can see it even if checks fail
+            speedup_ratio = self.baseline_time / optimized_time
+
+            print(f"\n{'=' * 50}")
+            print("PERFORMANCE METRICS:")
+            print(f"{'=' * 50}")
+            print("  Baseline:")
+            print(f"    - Time:     {self.baseline_time:.2f}s")
+            print(f"    - Accuracy: {self.baseline_accuracy:.4f}")
+            print("  Optimized:")
+            print(f"    - Time:     {optimized_time:.2f}s")
+            print(f"    - Accuracy: {optimized_accuracy:.4f}")
+            print("  Results:")
             print(
-                f"Optimized: time={optimized_time:.2f}s, accuracy={optimized_accuracy:.4f}"
+                f"    - Speedup:  {speedup_ratio:.2f}x (target: {self.target_speedup}x)"
             )
+            print(
+                f"    - Acc Diff: {abs(optimized_accuracy - self.baseline_accuracy):.4f}"
+            )
+            print(f"{'=' * 50}\n")
 
             # Perform safety checks to prevent cheating
             print("Running safety checks...")
             safety_passed, safety_message = self._safety_checks(optimized_file, output)
             if not safety_passed:
                 print(f"  ✗ Safety check failed: {safety_message}")
+                print(
+                    f"  ℹ Achieved {speedup_ratio:.2f}x speedup, but failed validation"
+                )
                 return False
             print(f"  ✓ {safety_message}")
-
-            # Calculate speedup
-            speedup_ratio = self.baseline_time / optimized_time
 
             # Check correctness (accuracy should be within tolerance)
             accuracy_diff = abs(optimized_accuracy - self.baseline_accuracy)
@@ -320,6 +365,9 @@ Example workflow:
                 print(
                     f"  ✗ Accuracy mismatch: baseline={self.baseline_accuracy:.4f}, "
                     f"optimized={optimized_accuracy:.4f} (diff={accuracy_diff:.4f} > {self.accuracy_tolerance})"
+                )
+                print(
+                    f"  ℹ Achieved {speedup_ratio:.2f}x speedup, but accuracy too different"
                 )
                 return False
 
@@ -331,14 +379,14 @@ Example workflow:
                 return False
 
             # Check if we achieved the target speedup
-            if speedup_ratio >= TARGET_SPEEDUP:
+            if speedup_ratio >= self.target_speedup:
                 print(
-                    f"  ✓ Agent achieved {speedup_ratio:.2f}x speedup with correct accuracy (target: {TARGET_SPEEDUP}x)"
+                    f"  ✓ Agent achieved {speedup_ratio:.2f}x speedup with correct accuracy (target: {self.target_speedup}x)"
                 )
                 return True
             else:
                 print(
-                    f"  ✗ Speedup {speedup_ratio:.2f}x is below target (need: {TARGET_SPEEDUP}x, achieved: {speedup_ratio:.2f}x)"
+                    f"  ✗ Speedup {speedup_ratio:.2f}x is below target (need: {self.target_speedup}x, achieved: {speedup_ratio:.2f}x)"
                 )
                 return False
 
@@ -398,4 +446,48 @@ class MLTrainingOptimizationPyTorch(MLTrainingOptimizationProblem):
             },
             min_file_length=700,
             accuracy_tolerance=0.02,
+        )
+
+
+class ComplexMLTrainingWithPySpy(MLTrainingOptimizationProblem):
+    """
+    Validation problem to demonstrate that py-spy is necessary for complex optimizations.
+
+    This problem is configured to ALWAYS FAIL without profiling tools:
+    - Uses the complex training file with multiple hidden bottlenecks
+    - Sets an extremely high speedup target (33x) that's nearly impossible to achieve
+      without identifying the O(n^2) normalization bottleneck
+    - Explicitly EXCLUDES the profile_with_pyspy tool
+    - Agents must rely on manual code inspection, which typically won't find all bottlenecks
+
+    When py-spy is available, the same speedup target becomes achievable by:
+    1. Using profile_with_pyspy() to identify the O(n^2) normalization as the #1 bottleneck
+    2. Vectorizing the custom activation function (2nd biggest bottleneck)
+    3. Optimizing the gradient extraction and batch size
+
+    This validates that profiling tools are essential for this complexity level.
+    """
+
+    def __init__(self, include_pyspy: bool = False):
+        """
+        Initialize the validation problem.
+
+        Args:
+            include_pyspy: If True, includes py-spy tool (should pass).
+                          If False, excludes py-spy tool (should fail).
+        """
+        super().__init__(
+            slow_training_file="problem_data/slow_ml_training_complex.py",
+            required_imports=["torch", "nn", "numpy"],
+            required_components=["ComplexNN", "ComplexFeatureExtractor"],
+            expected_output_patterns={
+                "train_size": 2400,
+                "test_size": 600,
+                "n_samples": 3000,
+            },
+            min_file_length=1000,
+            accuracy_tolerance=0.05,
+            target_speedup=33.0,  # Extremely high target, go from 32x to 34x improvement with py-spy tool.
+            tools=BasicToolset.get_tools(include_pyspy=include_pyspy),
+            tool_handlers=BasicToolset.get_handlers(include_pyspy=include_pyspy),
         )
