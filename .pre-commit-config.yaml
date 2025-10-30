@@ -1,3 +1,5 @@
+exclude: '^(saved_output|output)/'
+
 repos:
   # Ruff - Fast Python linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
